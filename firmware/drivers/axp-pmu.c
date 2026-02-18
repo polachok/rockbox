@@ -551,17 +551,24 @@ bool axp_debug_menu(void)
 unsigned int power_input_status(void)
 {
     unsigned int state = 0;
-#if defined(EROS_QN)
+#if defined(HAVE_AXP2101_ADDON)
+# if defined(EROS_QN)
     int devicever;
-# if defined(BOOTLOADER)
+#  if defined(BOOTLOADER)
     devicever = EROSQN_VER;
-# else
+#  else
     devicever = device_data.hw_rev;
-# endif
-    if (devicever >= 4) {
+#  endif
+    if (devicever >= 4)
+# endif /* EROS_QN */
+    {
         return axp2101_power_input_status();
-    } else
-#endif
+    }
+# if defined(EROS_QN)
+    else
+# endif
+#endif /* HAVE_AXP2101_ADDON */
+#if !defined(HAVE_AXP2101_ADDON) || defined(EROS_QN)
     {
         int input_status = axp_input_status();
 
@@ -576,6 +583,7 @@ unsigned int power_input_status(void)
             state |= POWER_INPUT_BATTERY;
 #endif
     }
+#endif /* !HAVE_AXP2101_ADDON || EROS_QN */
 
     return state;
 }
