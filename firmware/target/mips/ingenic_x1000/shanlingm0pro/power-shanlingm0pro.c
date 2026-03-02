@@ -24,6 +24,7 @@
 
 #include "power.h"
 #include "adc.h"
+#include "audiohw.h"
 #include "system.h"
 #include "kernel.h"
 #ifdef HAVE_USB_CHARGING_ENABLE
@@ -32,7 +33,12 @@
 #include "axp-pmu.h"
 #include "axp-2101.h"
 #include "i2c-x1000.h"
-#include "audiohw.h"
+#include "gpio-x1000.h"
+#include "x1000/cpm.h"
+
+/* Magic value written to CPM scratch pad to request bootloader recovery mode.
+ * CPM scratch survives WDT reset; SPL saves it before zeroing. */
+#define RECOVERY_MAGIC 0x524543 /* "REC" */
 
 unsigned short battery_level_disksafe = 3470;
 
@@ -121,11 +127,20 @@ void adc_init(void)
 
 void power_off(void)
 {
-    /* Mute and shut down DAC to avoid pop */
-    audiohw_close();
-    mdelay(100);
-
     axp2101_power_off();
+    while(1);
+}
+
+void reboot_to_recovery(void)
+{
+    audiohw_close();
+
+    /* Write magic to CPM scratch pad — SPL saves this before zeroing */
+    REG_CPM_SCRATCH_PROT = 0x5a5a;
+    REG_CPM_SCRATCH = RECOVERY_MAGIC;
+    REG_CPM_SCRATCH_PROT = 0xa5a5;
+
+    system_reboot();
     while(1);
 }
 

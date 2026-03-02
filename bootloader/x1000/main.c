@@ -33,6 +33,9 @@
 #include "boot-x1000.h"
 #include <stdbool.h>
 
+/* Magic value for reboot-to-recovery via CPM scratch pad */
+#define RECOVERY_MAGIC 0x524543 /* "REC" */
+
 static int read_btn(void)
 {
 #ifdef HAVE_BUTTON_DATA
@@ -45,8 +48,6 @@ static int read_btn(void)
 
 void main(uint32_t saved_cpm_scratch)
 {
-    (void)saved_cpm_scratch;
-
     system_init();
     core_allocator_init();
     kernel_init();
@@ -73,6 +74,10 @@ void main(uint32_t saved_cpm_scratch)
      * present, blocking with an "insert SD card" prompt if appropriate. */
     disk_mount_all();
 
+    /* If USB booting, the user probably needs to enter recovery mode;
+     * let's not force them to hold down the recovery key. */
+    bool recovery_mode = get_boot_flag(BOOT_FLAG_USB_BOOT);
+
 #ifdef SHANLING_Q1
     /* This is needed for OF updates. The OF extracts the update package
      * to the SD card and reboots to the recovery kernel to complete the
@@ -81,11 +86,15 @@ void main(uint32_t saved_cpm_scratch)
         cpm_scratch_set(saved_cpm_scratch & 0xffff0000);
         boot_of_recovery();
     }
+#elif defined(SHANLING_M0PRO)
+    /* M0 Pro uses CPM scratch pad for recovery magic — SPL saves it
+     * before zeroing, so we check the value passed to us. No need to
+     * clear since SPL already zeroed the register. */
+    if(saved_cpm_scratch == RECOVERY_MAGIC)
+        recovery_mode = true;
+#else
+    (void)saved_cpm_scratch;
 #endif
-
-    /* If USB booting, the user probably needs to enter recovery mode;
-     * let's not force them to hold down the recovery key. */
-    bool recovery_mode = get_boot_flag(BOOT_FLAG_USB_BOOT);
 
     /* Normal boot - if it fails, we bail to the recovery menu */
     if(!recovery_mode) {

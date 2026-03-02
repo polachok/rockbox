@@ -173,12 +173,26 @@ extern bool dbg_shanlingq1_touchscreen(void);
 #endif
 #ifdef SHANLING_M0PRO
 extern bool dbg_shanlingm0pro_touchscreen(void);
+extern void reboot_to_recovery(void);
 #endif
 #ifdef HAVE_AXP_PMU
 extern bool axp_debug_menu(void);
 #endif
 #ifdef HAVE_CW2015
 extern bool cw2015_debug_menu(void);
+#endif
+
+#ifdef SHANLING_M0PRO
+static bool dbg_reboot_recovery(void)
+{
+    lcd_clear_display();
+    lcd_putsf(0, 0, "Rebooting to recovery...");
+    lcd_update();
+    sleep(HZ);
+    reboot_to_recovery();
+    return false; /* not reached */
+}
+
 #endif
 
 /* Menu definition */
@@ -200,6 +214,7 @@ static const struct {
 #endif
 #ifdef SHANLING_M0PRO
     {"Touchscreen", &dbg_shanlingm0pro_touchscreen},
+    {"Reboot to recovery", &dbg_reboot_recovery},
 #endif
 #ifdef HAVE_AXP_PMU
     {"Power stats", &axp_debug_menu},
