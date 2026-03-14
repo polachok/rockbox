@@ -139,7 +139,7 @@ int button_read_device(int* data)
             int ty = (LCD_HEIGHT - 1) - point->pos_y;
             if(point->event == HYNITRON_EVT_PRESS ||
                point->event == HYNITRON_EVT_CONTACT)
-                r |= touchscreen_to_pixels(tx, ty, NULL);
+                r |= touchscreen_to_pixels(tx, ty, data);
         }
     }
 

@@ -158,7 +158,7 @@ int button_read_device(int* data)
             point = &ft6x06_state.points[i];
             if(point->event == FT6x06_EVT_PRESS ||
                point->event == FT6x06_EVT_CONTACT)
-                r |= touchscreen_to_pixels(point->pos_x, point->pos_y, NULL);
+                r |= touchscreen_to_pixels(point->pos_x, point->pos_y, data);
         }
     }
 
